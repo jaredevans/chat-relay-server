@@ -1,5 +1,7 @@
 # chat-relay-server
-Chat relay server and chat client for 1:1 chat and open chatroom - python
+Chat relay server and chat client for 1:1 chat and open chatroom
+
+Python with websockets (TLS).
 
 For reference only. Do not use for production due to insecure code.
 
