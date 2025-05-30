@@ -2,7 +2,7 @@ import asyncio
 import websockets
 import sys
 
-WS_URL = "wss://chat.jarednevans.com/ws/"
+WS_URL = "wss://chat.www.com/ws/"
 
 async def main():
     peer_name = None
