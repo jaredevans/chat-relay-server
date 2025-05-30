@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
+        <!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>WebSocket + WebRTC Video Chat</title>
@@ -13,21 +15,36 @@
     #sendBtn:hover, #videoBtn:hover, #hangupBtn:hover { background: #6e78ff; }
     #info { padding: .5em 1em; color: #82b1ff; font-size: 0.95em;}
     .me { color: #9fc6ff; }
-    #videos { display: flex; gap: 1em; align-items: center; padding: 1em; background: #222; }
-    video { width: 180px; height: 135px; background: #111; border: 2px solid #444; border-radius: 6px; }
-    @media (max-width: 600px) {
-      #videos { flex-direction: column; }
-      video { width: 96vw; height: 54vw; }
+    #videos {
+      display: flex;
+      gap: 2em;
+      align-items: center;
+      justify-content: center;
+      padding: 2em 0;
+      background: #222;
+    }
+    video {
+      width: 400px;
+      height: 300px;
+      background: #111;
+      border: 2px solid #444;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px #000a;
+      transition: box-shadow 0.3s;
+    }
+    video:focus, video:hover {
+      box-shadow: 0 8px 32px #0058ff44;
+    }
+    @media (max-width: 900px) {
+      #videos { flex-direction: column; gap: 1em; }
+      video { width: 95vw; height: 54vw; }
     }
   </style>
 </head>
 <body>
   <div id="chat" aria-live="polite"></div>
   <div id="info"></div>
-  <div id="inputBar">
-    <input id="userInput" type="text" placeholder="Type your message or commands here..." autocomplete="off" />
-    <button id="sendBtn">Send</button>
-    <button id="videoBtn">Start Video Chat</button>
+  <div id="inputBar">                                                                                                       <input id="userInput" type="text" placeholder="Type your message or commands here..." autocomplete="off" />             <button id="sendBtn">Send</button>                                                                                      <button id="videoBtn">Start Video Chat</button>
     <button id="hangupBtn">Hang Up</button>
   </div>
   <div id="videos">
@@ -40,8 +57,7 @@
       <video id="remoteVideo" autoplay playsinline></video>
     </div>
   </div>
-  <script>
-    let ws;
+  <script>                                                                                                                  let ws;
     let quitting = false;
     let myCode = "";
     let myName = "";
@@ -57,7 +73,8 @@
       if (cls) el.className = cls;
       el.textContent = msg;
       c.appendChild(el);
-      c.scrollTop = c.scrollHeight;                                                                                         }
+      c.scrollTop = c.scrollHeight;
+    }
     function updateInfo() {
       document.getElementById('info').textContent =
         `Your chat code is ${myCode}, your name is "${myName}"`;
@@ -67,9 +84,10 @@
     }
 
     function connect() {
-      ws = new WebSocket("wss://chat.www.com/ws/");
+      ws = new WebSocket("wss://chat.jarednevans.com/ws/");
       ws.onopen = () => { info("Connected. Waiting for server..."); };
-      ws.onmessage = (evt) => {                                                                                                 const msg = evt.data;
+      ws.onmessage = (evt) => {
+        const msg = evt.data;
         if (msg.startsWith("CONNECTED:")) {
           let parts = msg.split(":");
           myCode = parts[1];
@@ -93,7 +111,8 @@
         }
         else if (msg === "PEER_LEFT") {
           log("[Your chat partner disconnected. Type /join CODE to connect to another.]", "sys");
-          resetVideoState();                                                                                                      videoChatRequested = false;
+          resetVideoState();
+          videoChatRequested = false;
         }
         else if (msg === "PEER_LEFT_CHATROOM") {
           log("[Your chat partner has left for the chatroom.]", "sys");
@@ -105,7 +124,8 @@
           log(`[${sender} @ chatroom]: ${text}`,"room");
         }
         else if (msg.startsWith("INFO:")) {
-          log("[Info] " + msg.slice(5), "info");                                                                                }
+          log("[Info] " + msg.slice(5), "info");
+        }
         else if (msg.startsWith("ERROR:")) {
           log("[ERROR] " + msg.slice(6),"err");
         }
@@ -259,7 +279,8 @@
           doHandleVideoOffer(offer);
         }).catch(err => {
           log("[Error accessing camera/mic for answer: " + err + "]", "err");
-        });                                                                                                                 }
+        });
+    }
     function doHandleVideoOffer(offer) {
       peerConnection.setRemoteDescription(new RTCSessionDescription(offer)).then(() => {
         return peerConnection.createAnswer();
@@ -297,12 +318,10 @@
       if (localStream) {
         localStream.getTracks().forEach(track => track.stop());
         document.getElementById('localVideo').srcObject = null;
-        localStream = null;
-      }
+        localStream = null;                                                                                                   }
       // Clean up connection and remote video
       if (peerConnection) {
-        peerConnection.close();
-        peerConnection = null;
+        peerConnection.close();                                                                                                 peerConnection = null;
         document.getElementById('remoteVideo').srcObject = null;
       }
     }
