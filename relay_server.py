@@ -59,8 +59,7 @@ async def handler(websocket):
                     await relay_message(peer_ws, "INFO:You left the chatroom for 1:1 chat.")
 
                 # If already in 1:1, disconnect from old peer
-                old_peer = clients[code]['peer']
-                if old_peer and old_peer in clients:
+                old_peer = clients[code]['peer']                                                                                        if old_peer and old_peer in clients:
                     peer_ws = clients[old_peer]['ws']
                     await relay_message(peer_ws, "PEER_LEFT")
                     clients[old_peer]['peer'] = None
@@ -97,7 +96,6 @@ async def handler(websocket):
                 if peer_code and peer_code in clients:
                     peer_ws = clients[peer_code]['ws']
                     await relay_message(peer_ws, f"RENAMED:{new_name}")
-
             elif message == "LEAVE":
                 if clients[code]['in_chatroom']:
                     # Notify other chatroom members BEFORE removing from chatroom
@@ -106,7 +104,8 @@ async def handler(websocket):
                     chatroom.discard(code)
                     clients[code]['in_chatroom'] = False
                     await websocket.send("INFO:You left the chatroom.")
-                peer_code = clients[code]['peer']                                                                                       if peer_code and peer_code in clients:
+                peer_code = clients[code]['peer']
+                if peer_code and peer_code in clients:
                     peer_ws = clients[peer_code]['ws']
                     print(f"[-] {clients[code]['name']} (code: {code}) left chat with {clients[peer_code]['name']} (code: {peer_code})")
                     await relay_message(peer_ws, "PEER_LEFT")
@@ -141,6 +140,19 @@ async def handler(websocket):
                 else:
                     list_text = "No one is currently in the chatroom."
                 await websocket.send(f"INFO:{list_text}")
+
+            # --- WebRTC/Video Signaling relay, including hangup ---
+            elif (
+                message == "VIDEO_PLEASE_START"
+                or message.startswith("VIDEO_OFFER:")
+                or message.startswith("VIDEO_ANSWER:")
+                or message.startswith("VIDEO_ICE:")
+                or message == "VIDEO_HANGUP"
+            ):
+                peer_code = clients[code]['peer']
+                if peer_code and peer_code in clients:
+                    peer_ws = clients[peer_code]['ws']
+                    await relay_message(peer_ws, message)
 
     except Exception as e:
         print(f"[!] Exception for client {clients[code]['name']} (code: {code}): {e}")
