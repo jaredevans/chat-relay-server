@@ -11,7 +11,7 @@ Webapp client:
 
 <img src="https://i.imgur.com/Wd8PxaE.png" width=700 height=800>
 
-Video chat:
+Video chat (between iPad [must run Safari] and Mac laptop [Google Chrome]):
 
 <img src="https://i.imgur.com/OvH4tAP.jpeg" width=700 height=600>
 
