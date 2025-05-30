@@ -19,7 +19,11 @@ Video chat (between iPad [must run Safari] and Mac laptop [Google Chrome]):
 Async Chat Relay Server with Text and Video Chat, with CLI and webapp clients
 
 Overview:
-This project is a lightweight chat relay server that supports both text chat and peer-to-peer video chat. It’s designed to be self-hosted and easy to run, requiring minimal dependencies. The server acts as a signaling relay for chat messages and for exchanging WebRTC information (for video), but does not relay video or audio data—all media streams go directly between users’ browsers using secure peer-to-peer connections.
+This project is a lightweight chat relay server that supports both text chat and peer-to-peer video chat.
+It’s designed to be self-hosted and easy to run, requiring minimal dependencies.
+The server acts as a signaling relay for chat messages and for exchanging WebRTC information (for video),
+but does not relay video or audio data—all media streams go directly between users’ browsers
+using secure peer-to-peer connections.
 
 The project includes:
 
@@ -36,7 +40,8 @@ Each user who connects gets a unique code and a random display name.
 Users can chat one-on-one by exchanging codes, or join a shared chatroom.
 You can change your display name, join or leave the chatroom, and see who else is in the chatroom.
 
-For video chat, users connect in a private one-on-one session. The server relays the WebRTC offer/answer/ICE candidates, but the actual video stream is peer-to-peer.
+For video chat, users connect in a private one-on-one session. The server relays the WebRTC offer/answer/ICE candidates,
+but the actual video stream is peer-to-peer.
 
 Features:
 Private, no account registration or central user database.
@@ -66,7 +71,8 @@ Edit the WS_URL at the top of the script if necessary to match your deployment.
 Run with:
 python3 chat_client.py
 
-The client will print your unique code and display name. Share your code with a friend or enter someone else's code to connect.
+The client will print your unique code and display name. Share your code with a friend or
+enter someone else's code to connect.
 
 Supported CLI Commands:
 /join CODE — Start a private chat with another user (use their code).
@@ -96,5 +102,7 @@ Security Notes:
 The server is intended for small private use (friends, small groups, testing).
 No message history is stored. All state is in memory only.
 There is no user authentication; anyone who knows your server address can connect and get a code.
-Caution: This was more of a learning experience for me. The code, while functional, has not undergone a security review and is vulnerable to being exploited.  Do not continually expose to public Internet.
+Caution: This was more of a learning experience for me. The code, while functional,
+has not undergone a security review and is vulnerable to being exploited.
+*** Do not continually expose to public Internet. ***
 ```
