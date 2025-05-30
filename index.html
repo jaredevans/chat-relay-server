@@ -67,7 +67,7 @@
     }
 
     function connect() {
-      ws = new WebSocket("wss://chat.jarednevans.com/ws/");
+      ws = new WebSocket("wss://chat.www.com/ws/");
       ws.onopen = () => { info("Connected. Waiting for server..."); };
       ws.onmessage = (evt) => {                                                                                                 const msg = evt.data;
         if (msg.startsWith("CONNECTED:")) {
