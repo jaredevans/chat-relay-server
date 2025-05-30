@@ -1,3 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>WebSocket Chat Relay Client</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: monospace; background: #181c24; color: #f2f2f2; margin: 0; }
+    #chat { width: 100%; height: 60vh; background: #23283b; overflow-y: auto; padding: 1em; border-bottom: 1px solid #333;}
+    #inputBar { display: flex; }
+    #userInput { flex: 1; padding: 1em; background: #111; color: #f2f2f2; border: none;}
+    #sendBtn { padding: 1em; background: #5d67ee; color: #fff; border: none; cursor: pointer;}
+    #sendBtn:hover { background: #6e78ff; }
+    #info { padding: .5em 1em; color: #82b1ff; font-size: 0.95em;}
+    .me { color: #9fc6ff; }
+  </style>
+</head>
+<body>
+  <div id="chat" aria-live="polite"></div>
+  <div id="info"></div>
+  <div id="inputBar">
+    <input id="userInput" type="text" placeholder="Type your message or commands here..." autocomplete="off" />
+    <button id="sendBtn">Send</button>
+  </div>
+  <script>
+    let ws;
+    let quitting = false;
+
+    function log(msg, cls="") {
+      const c = document.getElementById('chat');
+      let el = document.createElement('div');
+      if (cls) el.className = cls;
+      el.textContent = msg;
+      c.appendChild(el);
+      c.scrollTop = c.scrollHeight;
+    }
+    function info(msg) {
+      document.getElementById('info').textContent = msg;
+    }
+
+    function connect() {
+      ws = new WebSocket("wss://chat.www.com/ws/");
+      ws.onopen = () => { info("Connected. Waiting for server..."); };
+      ws.onmessage = (evt) => {
+        const msg = evt.data;
+        if (msg.startsWith("CONNECTED:")) {
+          let parts = msg.split(":");
+          info(`Your chat code is ${parts[1]}, your name is "${parts[2]}"`);
+          log("Welcome! Use /join CODE, /name NEWNAME, /chatroom, /list, /quit");
+        }
+        else if (msg.startsWith("PAIR:")) {
+          let [,code,name] = msg.split(":",3);
+          log(`[Connected! You are chatting with ${name} (code ${code})]`, "sys");
+        }                                                                                                                       else if (msg.startsWith("MSGFROM:")) {                                                                                    let [,sender,text] = msg.split(":",3);
+          log(`${sender}: ${text}`, "peer");
+        }
+        else if (msg.startsWith("RENAMED:")) {
+          let newName = msg.split(":",2)[1];
+          log(`[Your chat partner is now: ${newName}]`, "sys");
+        }
+        else if (msg === "PEER_LEFT") {
+          log("[Your chat partner disconnected. Type /join CODE to connect to another.]", "sys");
+        }
+        else if (msg === "PEER_LEFT_CHATROOM") {
+          log("[Your chat partner has left for the chatroom.]", "sys");
+        }
+        else if (msg.startsWith("CHATROOM:")) {
+          let [,sender,text] = msg.split(":",3);
+          log(`[${sender} @ chatroom]: ${text}`,"room");
+        }
+        else if (msg.startsWith("INFO:")) {
+          log("[Info] " + msg.slice(5), "info");                                                                                  // The client now closes the websocket immediately after /quit, so this is for info only
+        }
+        else if (msg.startsWith("ERROR:")) {
+          log("[ERROR] " + msg.slice(6),"err");
+        }
+        else {
+          log("[Server] " + msg, "sys");
+        }
+      };
+      ws.onclose = () => {
+        info("Connection closed.");
+        log("[Disconnected from server.]");
+      };
+      ws.onerror = (e) => {
+        info("WebSocket error!");
+        log("[WebSocket error: check console for details.]", "err");
+      };
+    }
+
+    connect();
+
+    document.getElementById('sendBtn').onclick = send;
+    document.getElementById('userInput').onkeydown = (e) => {
+      if (e.key === "Enter") send();                                                                                        };
+
+    function send() {
+      const inp = document.getElementById('userInput');
+      let txt = inp.value.trim();
+      if (!txt) return;
+      if (!ws || ws.readyState !== 1) {
+        log("[Cannot send: not connected.]","err");
+        return;
+      }
+      if (txt === "/quit") {
+        quitting = true;
+        ws.send("LEAVE");
+        info("Leaving chat...");
+        ws.close();   // Close immediately after /quit command
+      } else if (txt.startsWith("/join ")) {
+        ws.send("JOIN:" + txt.split(" ",2)[1]);
+      } else if (txt.startsWith("/name ")) {
+        ws.send("RENAME:" + txt.split(" ",2)[1]);
+      } else if (txt === "/chatroom") {
+        ws.send("/chatroom");
+      } else if (txt === "/list") {
+        ws.send("/list");
+      } else {
+        ws.send("MSG:" + txt);
+        // Echo message locally for sender
+        log(`You: ${txt}`, "me");
+      }
+      inp.value = "";
+    }
+
+  </script>
+</body>
+</html>
+
+root@intelaide:/var/www/chat# cat relay_server.py
 import asyncio
 import websockets
 import secrets
@@ -52,13 +182,14 @@ async def handler(websocket):
                     await websocket.send("INFO:You left the chatroom for 1:1 chat.")
 
                 # Remove target peer from chatroom (if in it)
-                if other_code in clients and clients[other_code]['in_chatroom']:                                                            chatroom.discard(other_code)                                                                                            clients[other_code]['in_chatroom'] = False
+                if other_code in clients and clients[other_code]['in_chatroom']:
+                    chatroom.discard(other_code)
+                    clients[other_code]['in_chatroom'] = False
                     peer_ws = clients[other_code]['ws']
                     await relay_message(peer_ws, "INFO:You left the chatroom for 1:1 chat.")
 
                 # If already in 1:1, disconnect from old peer
-                old_peer = clients[code]['peer']
-                if old_peer and old_peer in clients:
+                old_peer = clients[code]['peer']                                                                                        if old_peer and old_peer in clients:
                     peer_ws = clients[old_peer]['ws']
                     await relay_message(peer_ws, "PEER_LEFT")
                     clients[old_peer]['peer'] = None
@@ -84,13 +215,7 @@ async def handler(websocket):
                     peer_code = clients[code]['peer']
                     if peer_code and peer_code in clients:
                         peer_ws = clients[peer_code]['ws']
-                        await relay_message(peer_ws, f"MSGFROM:{clients[code]['name']}:{msg_text}")
-
-            elif message.startswith("RENAME:"):
-                new_name = message[7:]
-                old_name = clients[code]['name']
-                clients[code]['name'] = new_name
-                print(f"[~] Client {old_name} (code: {code}) renamed to {new_name}")
+                        await relay_message(peer_ws, f"MSGFROM:{clients[code]['name']}:{msg_text}")                                                                                                                                                         elif message.startswith("RENAME:"):                                                                                         new_name = message[7:]                                                                                                  old_name = clients[code]['name']                                                                                        clients[code]['name'] = new_name                                                                                        print(f"[~] Client {old_name} (code: {code}) renamed to {new_name}")
                 peer_code = clients[code]['peer']
                 if peer_code and peer_code in clients:
                     peer_ws = clients[peer_code]['ws']
@@ -152,7 +277,8 @@ async def handler(websocket):
             clients[peer_code]['peer'] = None
         # Notify chatroom BEFORE removing from set!
         if clients[code]['in_chatroom']:
-            notice_text = f"{clients[code]['name']} (code: {code}) has disconnected from the chatroom."                             await broadcast_chatroom_notice(code, notice_text)
+            notice_text = f"{clients[code]['name']} (code: {code}) has disconnected from the chatroom."
+            await broadcast_chatroom_notice(code, notice_text)
             chatroom.discard(code)
         print(f"[*] Client disconnected: {clients[code]['name']} (code: {code})")
         if code in clients:
