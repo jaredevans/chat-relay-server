@@ -2,10 +2,12 @@ import asyncio
 import websockets
 import sys
 
-WS_URL = "wss://chat.www.com/ws/"
+WS_URL = "wss://chat.jarednevans.com/ws/"
 
 async def main():
     peer_name = None
+    my_name = None
+    my_code = None
     in_chatroom = False
     quitting = False  # Track if user requested /quit
 
@@ -14,17 +16,20 @@ async def main():
             connected = await ws.recv()
             if connected.startswith("CONNECTED:"):
                 parts = connected.split(":")
-                code, name = parts[1], parts[2]
-                print(f"Your unique chat code is: {code}")
-                print(f"Your current name is: {name}")
+                my_code, my_name = parts[1], parts[2]
+                print(f"Your unique chat code is: {my_code}")
+                print(f"Your current name is: {my_name}")
                 print("Give your code to your friend, or enter their code to chat.")
                 print("Type /join CODE to connect, /name NEWNAME to rename, /chatroom to join the chatroom, /list to see chatroom members, /quit to exit.")
             else:
                 print("Failed to connect.")
                 return
 
+            def show_info():
+                print(f"Your chat code is: {my_code}, your name is: {my_name}")
+
             async def send_input():
-                nonlocal in_chatroom, quitting
+                nonlocal in_chatroom, quitting, my_name
                 while True:
                     user_input = await asyncio.get_event_loop().run_in_executor(None, sys.stdin.readline)
                     user_input = user_input.strip()
@@ -35,6 +40,9 @@ async def main():
                     elif user_input.startswith("/name "):
                         new_name = user_input.split(" ", 1)[1]
                         await ws.send(f"RENAME:{new_name}")
+                        my_name = new_name
+                        show_info()
+                        print(f"[You are now known as: {my_name}]")
                     elif user_input == "/chatroom":
                         await ws.send("/chatroom")
                         in_chatroom = True

@@ -25,6 +25,8 @@
   <script>
     let ws;
     let quitting = false;
+    let myCode = "";
+    let myName = "";
 
     function log(msg, cls="") {
       const c = document.getElementById('chat');
@@ -33,6 +35,10 @@
       el.textContent = msg;
       c.appendChild(el);
       c.scrollTop = c.scrollHeight;
+    }
+    function updateInfo() {
+      document.getElementById('info').textContent =
+        `Your chat code is ${myCode}, your name is "${myName}"`;
     }
     function info(msg) {
       document.getElementById('info').textContent = msg;
@@ -45,13 +51,17 @@
         const msg = evt.data;
         if (msg.startsWith("CONNECTED:")) {
           let parts = msg.split(":");
-          info(`Your chat code is ${parts[1]}, your name is "${parts[2]}"`);
+          myCode = parts[1];
+          myName = parts[2];
+          updateInfo();
           log("Welcome! Use /join CODE, /name NEWNAME, /chatroom, /list, /quit");
         }
         else if (msg.startsWith("PAIR:")) {
           let [,code,name] = msg.split(":",3);
           log(`[Connected! You are chatting with ${name} (code ${code})]`, "sys");
-        }                                                                                                                       else if (msg.startsWith("MSGFROM:")) {                                                                                    let [,sender,text] = msg.split(":",3);
+        }
+        else if (msg.startsWith("MSGFROM:")) {
+          let [,sender,text] = msg.split(":",3);
           log(`${sender}: ${text}`, "peer");
         }
         else if (msg.startsWith("RENAMED:")) {
@@ -69,7 +79,8 @@
           log(`[${sender} @ chatroom]: ${text}`,"room");
         }
         else if (msg.startsWith("INFO:")) {
-          log("[Info] " + msg.slice(5), "info");                                                                                  // The client now closes the websocket immediately after /quit, so this is for info only
+          log("[Info] " + msg.slice(5), "info");
+          // The client now closes the websocket immediately after /quit, so this is for info only
         }
         else if (msg.startsWith("ERROR:")) {
           log("[ERROR] " + msg.slice(6),"err");
@@ -92,7 +103,8 @@
 
     document.getElementById('sendBtn').onclick = send;
     document.getElementById('userInput').onkeydown = (e) => {
-      if (e.key === "Enter") send();                                                                                        };
+      if (e.key === "Enter") send();
+    };
 
     function send() {
       const inp = document.getElementById('userInput');
@@ -110,17 +122,19 @@
       } else if (txt.startsWith("/join ")) {
         ws.send("JOIN:" + txt.split(" ",2)[1]);
       } else if (txt.startsWith("/name ")) {
-        ws.send("RENAME:" + txt.split(" ",2)[1]);
+        // Update our name locally!
+        myName = txt.slice(6).trim();
+        updateInfo();
+        log(`[You are now known as: ${myName}]`, "sys");
+        ws.send("RENAME:" + myName);
       } else if (txt === "/chatroom") {
         ws.send("/chatroom");
       } else if (txt === "/list") {
         ws.send("/list");
       } else {
         ws.send("MSG:" + txt);
-        // Echo message locally for sender
         log(`You: ${txt}`, "me");
-      }
-      inp.value = "";
+      }                                                                                                                       inp.value = "";
     }
 
   </script>
