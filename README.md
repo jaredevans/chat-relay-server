@@ -1,7 +1,9 @@
 # chat-relay-server
 Chat relay server and chat client for 1:1 chat and open chatroom
 
-Caution: Only for proof-of-concept and reference only. Do not use for production due to insecure code.
+Caution: Only for proof-of-concept and reference. 
+Do not use for production or continually expose to public Internet, 
+due to insecure code.
 
 CLI client:
 
