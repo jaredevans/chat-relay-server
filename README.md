@@ -16,8 +16,6 @@ Video chat (between iPad [must run Safari] and Mac laptop [Google Chrome]):
 <img src="https://i.imgur.com/OvH4tAP.jpeg" width=700 height=600>
 
 ```
-Async Chat Relay Server with CLI and Webapp Clients
-
 Async Chat Relay Server with Text and Video Chat, with CLI and webapp clients
 
 Overview:
