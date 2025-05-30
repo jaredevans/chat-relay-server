@@ -136,4 +136,5 @@ Q: What browsers are supported?
 A: Chrome, Firefox, Edge, Safari (recent versions).
 
 Q: Is the server scalable?
-A: Intended for small to medium group usage (family, classrooms, clubs, etc).```
+A: Intended for small to medium group usage (family, classrooms, clubs, etc).
+```
