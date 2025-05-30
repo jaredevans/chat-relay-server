@@ -44,9 +44,11 @@ async def main():
                         await ws.send("LEAVE")
                         quitting = True
                         print("Leaving... (waiting for confirmation from server)")
+                        await ws.close()
                         break  # Stop sending input, but let receive() handle closure
                     else:
                         await ws.send(f"MSG:{user_input}")
+                        print(f"You: {user_input}")  # Echo your own message
 
             async def receive():
                 nonlocal peer_name, in_chatroom, quitting
@@ -66,7 +68,7 @@ async def main():
                         peer_name = sender  # Keep peer_name in sync
                         print(f"{sender}: {text}")
                     elif msg.startswith("RENAMED:"):
-                        new_name = msg.split(":",1)[1]
+                        new_name = msg.split(":", 1)[1]
                         peer_name = new_name
                         print(f"\n[Your chat partner is now known as: {new_name}]\n")
                     elif msg == "PEER_LEFT":

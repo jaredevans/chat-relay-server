@@ -52,9 +52,7 @@ async def handler(websocket):
                     await websocket.send("INFO:You left the chatroom for 1:1 chat.")
 
                 # Remove target peer from chatroom (if in it)
-                if other_code in clients and clients[other_code]['in_chatroom']:
-                    chatroom.discard(other_code)
-                    clients[other_code]['in_chatroom'] = False
+                if other_code in clients and clients[other_code]['in_chatroom']:                                                            chatroom.discard(other_code)                                                                                            clients[other_code]['in_chatroom'] = False
                     peer_ws = clients[other_code]['ws']
                     await relay_message(peer_ws, "INFO:You left the chatroom for 1:1 chat.")
 
@@ -66,7 +64,8 @@ async def handler(websocket):
                     clients[old_peer]['peer'] = None
                 clients[code]['peer'] = None
 
-                # Proceed to 1:1 pairing                                                                                                if other_code in clients and clients[other_code]['peer'] is None:
+                # Proceed to 1:1 pairing
+                if other_code in clients and clients[other_code]['peer'] is None:
                     clients[other_code]['peer'] = code
                     clients[code]['peer'] = other_code
                     peer_ws = clients[other_code]['ws']
@@ -79,7 +78,8 @@ async def handler(websocket):
 
             elif message.startswith("MSG:"):
                 msg_text = message[4:]
-                if clients[code]['in_chatroom']:                                                                                            await broadcast_chatroom(code, msg_text)
+                if clients[code]['in_chatroom']:
+                    await broadcast_chatroom(code, msg_text)
                 else:
                     peer_code = clients[code]['peer']
                     if peer_code and peer_code in clients:
@@ -98,16 +98,19 @@ async def handler(websocket):
 
             elif message == "LEAVE":
                 if clients[code]['in_chatroom']:
-                    # Notify other chatroom members BEFORE removing from chatroom                                                           notice_text = f"{clients[code]['name']} (code: {code}) has disconnected from the chatroom."
+                    # Notify other chatroom members BEFORE removing from chatroom
+                    notice_text = f"{clients[code]['name']} (code: {code}) has disconnected from the chatroom."
                     await broadcast_chatroom_notice(code, notice_text)
                     chatroom.discard(code)
                     clients[code]['in_chatroom'] = False
                     await websocket.send("INFO:You left the chatroom.")
-                peer_code = clients[code]['peer']                                                                                       if peer_code and peer_code in clients:
+                peer_code = clients[code]['peer']
+                if peer_code and peer_code in clients:
                     peer_ws = clients[peer_code]['ws']
                     print(f"[-] {clients[code]['name']} (code: {code}) left chat with {clients[peer_code]['name']} (code: {peer_code})")
                     await relay_message(peer_ws, "PEER_LEFT")
-                    clients[peer_code]['peer'] = None                                                                                   clients[code]['peer'] = None
+                    clients[peer_code]['peer'] = None
+                clients[code]['peer'] = None
 
             elif message == "/chatroom":
                 # Leave 1:1 chat if in one
@@ -144,12 +147,12 @@ async def handler(websocket):
         # Notify 1:1 peer
         peer_code = clients[code]['peer']
         if peer_code and peer_code in clients:
-            peer_ws = clients[peer_code]['ws']                                                                                      await relay_message(peer_ws, "PEER_LEFT")
+            peer_ws = clients[peer_code]['ws']
+            await relay_message(peer_ws, "PEER_LEFT")
             clients[peer_code]['peer'] = None
         # Notify chatroom BEFORE removing from set!
         if clients[code]['in_chatroom']:
-            notice_text = f"{clients[code]['name']} (code: {code}) has disconnected from the chatroom."
-            await broadcast_chatroom_notice(code, notice_text)
+            notice_text = f"{clients[code]['name']} (code: {code}) has disconnected from the chatroom."                             await broadcast_chatroom_notice(code, notice_text)
             chatroom.discard(code)
         print(f"[*] Client disconnected: {clients[code]['name']} (code: {code})")
         if code in clients:

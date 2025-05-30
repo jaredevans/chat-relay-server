@@ -14,8 +14,7 @@ server {
         proxy_set_header Host $host;
     }
 
-    # Optional: redirect all HTTP to HTTPS
-    # (Only do this if you're not serving anything else over HTTP)
-    # listen 80;
-    # return 301 https://$host$request_uri;
+    root /var/www/chat;
+    index index.html;
+
 }
