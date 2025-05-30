@@ -21,8 +21,8 @@ Async Chat Relay Server with Text and Video Chat, with CLI and webapp clients
 Overview:
 This project is a lightweight chat relay server that supports both text chat and peer-to-peer video chat.
 It’s designed to be self-hosted and easy to run, requiring minimal dependencies.
-The server acts as a signaling relay for chat messages and for exchanging WebRTC information (for video),
-but does not relay video or audio data—all media streams go directly between users’ browsers
+The server acts as a signaling relay for chat messages and for exchanging WebRTC information
+(for video), but does not relay video or audio data—all media streams go directly between users’ browsers
 using secure peer-to-peer connections.
 
 The project includes:
