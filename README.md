@@ -64,7 +64,7 @@ Python 3.7+
 websockets library (pip install websockets)
 
 python relay_server.py
-(Default: listens on 127.0.0.1:6789, use a public web server to proxy, such as nginx.)
+(Default: listens on 127.0.0.1:6789, use HTTPS web reverse proxy, such as nginx.)
 
 3. Deploy Web Client
 Copy index.html to your web server (e.g., /var/www/chat/index.html)
