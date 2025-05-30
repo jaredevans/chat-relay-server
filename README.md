@@ -40,8 +40,8 @@ Each user who connects gets a unique code and a random display name.
 Users can chat one-on-one by exchanging codes, or join a shared chatroom.
 You can change your display name, join or leave the chatroom, and see who else is in the chatroom.
 
-For video chat, users connect in a private one-on-one session. The server relays the WebRTC offer/answer/ICE candidates,
-but the actual video stream is peer-to-peer.
+For video chat, users connect in a private one-on-one session.
+The server relays the WebRTC offer/answer/ICE candidates, but the actual video stream is peer-to-peer.
 
 Features:
 Private, no account registration or central user database.
