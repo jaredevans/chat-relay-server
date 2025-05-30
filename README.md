@@ -13,93 +13,127 @@ Webapp client:
 
 
 ```
-Async Python Chat Relay
+Async Chat Relay Server with CLI and Webapp Clients
+A lightweight, self-hosted WebSocket-based chat relay server with:
 
-A simple asynchronous chat relay server with both command-line and webapp client written in Python using websockets and asyncio.
-Supports both private 1:1 chat (using unique codes) and public chatrooms with multiple participants.
+1:1 chat via unique codes
+Group chatroom mode
+Live renaming and presence
+WebRTC video chat between peers
+
+Two client types: Web (browser) & CLI (Python)
+
+Easy deployment with nginx reverse proxy & SSL
 
 Features
-WebSocket-based: Real-time communication with low latency.
-Unique chat codes: Easily connect privately to friends or colleagues.
-Simple chatroom: Join a shared group chat anytime.
-Rename yourself: Change your display name on the fly.
+1:1 Peer Chat:
+Share your code with someone to chat privately.
 
-Project Structure
+Chatroom:
+Join a group chat where all members see all messages.
 
-chat-relay/
-├── relay_server.py   # WebSocket relay server
-├── chat_client.py    # Command-line chat client
-├── index.html        # Webapp chat client
+WebRTC Video Calls:
+Start real-time video calls with your 1:1 peer (browser client).
 
-Getting Started
+Rename Yourself:
+Change your display name at any time, and it updates for your peer/chatroom.
 
-1. Install requirements
-pip install websockets
+CLI & Web Client:
+Use in the terminal or via a modern web browser.
 
-2. Run the Relay Server
-On your server or local machine:
-
-python relay_server.py
-
-The server will listen on ws://127.0.0.1:6789 by default.
-
-3. Configure your webserver:
-See accompanying nginx conifguration to proxy the websocket traffic.
-
-3. Run the Client for CLI and Web
-On any computer with python installed:
-
-python chat_client.py
-
-Edit WS_URL at the top of chat_client.py if connecting to a remote server.
-
-Copy index.html to the web root directory for the chat webapp on your web server.
+Simple Commands:
+/join CODE, /chatroom, /list, /name NEWNAME, /quit
 
 How It Works
-When you connect, you receive a unique code (e.g., H3X8E2JK) and a default name.
-Share your code with someone else so they can connect to you for a private 1:1 chat.
+The server acts as a relay for chat and WebRTC signals—no media relaying; video/audio flows directly between clients (peer-to-peer).
 
-You can also join a public chatroom to talk with everyone else in the room.
+Clients connect via WebSockets:
+Each client gets a random code and default name.
+Connect to a friend by exchanging codes.
 
-Client Commands
-You can enter these commands at any time in the chat client:
+Supports text chat, renaming, group chat, and video chat (web only).
 
-Command	Description
-/join CODE	Connect to another user for private 1:1 chat. Replace CODE with their code.
-/name NEWNAME	Change your display name to NEWNAME.
-/chatroom	Leave private chat (if any) and join the group chatroom.
-/list	Show a list of current chatroom members.
-/quit	Cleanly leave chat (from chatroom or 1:1) and exit the client.
-(any message)	Send message to current chat (1:1 or chatroom).
+Quick Start
+1. Clone the Repo
+git clone https://github.com/yourusername/chat-relay-server.git
+cd chat-relay-server
 
-Example Usage
-Private 1:1 Chat
-User A starts a client, gets a code (e.g., ABCD1234), shares it with User B.
-User B starts a client, runs /join ABCD1234.
-Both users are connected privately. Type messages as you wish.
+2. Run the Relay Server
+Requirements:
+Python 3.7+
+websockets library (pip install websockets)
 
-Chatroom
-Type /chatroom to join the public chatroom.
-Anyone else in the chatroom will see your messages.
+python relay_server.py
+(Default: listens on 127.0.0.1:6789, use a public web server to proxy, such as nginx.)
 
-Type /list to see who else is there.
+3. Deploy Web Client
+Copy index.html to your web server (e.g., /var/www/chat/index.html)
 
-Renaming
-Type /name MyCoolName to change how you appear to others.
+Edit the WebSocket URL in the HTML:
 
-Graceful Disconnects
-/quit safely exits the chat and notifies others (chat partner or chatroom).
-If you close the client with Ctrl-C, the server will also notify others of your departure.
+ws = new WebSocket("wss://yourdomain.com/ws/");
+Access in your browser:
+https://yourdomain.com/chat
 
-Notes
-The server is a relay only. It does not store messages or logs.
+4. Use the CLI Client
+Requirements:
+Python 3.7+
+websockets library (pip install websockets)
 
-All chat is ephemeral (disappears if server restarts or users disconnect).
+Edit the WebSocket URL (WS_URL) at the top of the client file to your server.
+python cli_client.py
 
-Server output is printed to the terminal for monitoring.
+5. Secure with Nginx & SSL/TLS
+Example nginx.conf:
 
-Security & Privacy
-No authentication: anyone with access to the server can join.
-Codes are randomly generated to reduce accidental collisions, but not cryptographically secure.
-Do not use for sensitive data.
-```
+server {
+    listen 443 ssl http2;
+    server_name chat.yourdomain.com;
+
+    ssl_certificate /etc/letsencrypt/live/chat.yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/chat.yourdomain.com/privkey.pem;
+    ssl_session_cache shared:SSL:10m;
+
+    location /ws/ {
+        proxy_pass http://127.0.0.1:6789;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+    }
+
+    root /var/www/chat;
+    index index.html;
+}
+
+Usage (Web & CLI Clients)
+
+Common Commands:
+/join CODE — connect 1:1 using a peer’s code
+/chatroom — join the group chatroom
+/list — show who is in the chatroom
+/name NEWNAME — change your display name
+/quit — exit
+
+Web Client:
+Click “Start Video Chat” for a live call (works after you are paired 1:1).
+Click “Hang Up” to end the call.
+
+CLI Client:
+Type commands or messages directly.
+
+Security/Privacy
+End-to-end media: WebRTC video/audio goes directly peer-to-peer.
+No message history is stored; all chat is ephemeral in memory.
+Each chat is private unless in chatroom mode.
+Use SSL for safe, encrypted transport.
+
+FAQ
+Q: Can I use this behind NAT?
+A: Yes! WebRTC will attempt peer-to-peer via public STUN servers (configurable in the web client).
+
+Q: What browsers are supported?
+A: Chrome, Firefox, Edge, Safari (recent versions).
+
+Q: Is the server scalable?
+A: Intended for small to medium group usage (family, classrooms, clubs, etc).```
