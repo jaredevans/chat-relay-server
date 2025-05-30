@@ -70,10 +70,10 @@ python relay_server.py
 Copy index.html to your web server (e.g., /var/www/chat/index.html)
 
 Edit the WebSocket URL in the HTML:
-
 ws = new WebSocket("wss://yourdomain.com/ws/");
+
 Access in your browser:
-https://yourdomain.com/chat
+https://chat.yourdomain.com/
 
 4. Use the CLI Client
 Requirements:
