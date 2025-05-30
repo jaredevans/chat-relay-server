@@ -15,7 +15,7 @@ Webapp client:
 ```
 Async Python Chat Relay
 
-A simple asynchronous chat relay server and command-line client written in Python using websockets and asyncio.
+A simple asynchronous chat relay server with both command-line and webapp client written in Python using websockets and asyncio.
 Supports both private 1:1 chat (using unique codes) and public chatrooms with multiple participants.
 
 Features
