@@ -9,7 +9,7 @@ CLI client:
 
 Webapp client:
 
-<img src="https://i.imgur.com/TuWmUjI.png" width=700 height=500>
+<img src="https://i.imgur.com/Aey37AF.png" width=700 height=500>
 
 
 ```
