@@ -98,5 +98,5 @@ Security Notes:
 The server is intended for small private use (friends, small groups, testing).
 No message history is stored. All state is in memory only.
 There is no user authentication; anyone who knows your server address can connect and get a code.
-Caution: The code, while functional, has not undergone a security review and is vulnerable to being exploited.  Do not continually expose to public Internet.
+Caution: This was more of a learning experience for me. The code, while functional, has not undergone a security review and is vulnerable to being exploited.  Do not continually expose to public Internet.
 ```
