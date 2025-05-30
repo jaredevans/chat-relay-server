@@ -3,7 +3,14 @@ Chat relay server and chat client for 1:1 chat and open chatroom
 
 Caution: Only for proof-of-concept and reference only. Do not use for production due to insecure code.
 
+CLI client:
+
 <img src="https://i.imgur.com/wHc0Sym.png" width=700 height=500>
+
+Webapp client:
+
+<img src="https://i.imgur.com/TuWmUjI.png" width=700 height=500>
+
 
 ```
 Async Python Chat Relay
@@ -22,6 +29,7 @@ Project Structure
 chat-relay/
 ├── relay_server.py   # WebSocket relay server
 ├── chat_client.py    # Command-line chat client
+├── index.html        # Webapp chat client
 
 Getting Started
 
@@ -38,12 +46,14 @@ The server will listen on ws://127.0.0.1:6789 by default.
 3. Configure your webserver:
 See accompanying nginx conifguration to proxy the websocket traffic.
 
-3. Run the Client
+3. Run the Client for CLI and Web
 On any computer with python installed:
 
 python chat_client.py
 
 Edit WS_URL at the top of chat_client.py if connecting to a remote server.
+
+Copy index.html to the web root directory for the chat webapp on your web server.
 
 How It Works
 When you connect, you receive a unique code (e.g., H3X8E2JK) and a default name.
