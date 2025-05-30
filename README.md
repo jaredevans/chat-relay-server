@@ -66,7 +66,7 @@ By default, it listens on 127.0.0.1:6789 - use nginx reverse proxy make it acces
 
 3. Using the CLI Chat Client
 Save the client script as chat_client.py.
-Edit the WS_URL at the top of the script if necessary to match your deployment.
+Edit the WS_URL at the top of the script to match your deployment.
 
 Run with:
 python3 chat_client.py
@@ -83,6 +83,7 @@ Supported CLI Commands:
 
 4. Using the Web Client
 Save the HTML file and open it in a modern browser (Chrome, Firefox, Edge, Safari).
+Edit the line of code with wss:// to match your deployment.
 The web client connects via WebSocket to /ws/ and allows:
 
 One-on-one text chat (by code)
