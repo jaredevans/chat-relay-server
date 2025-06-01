@@ -1,5 +1,5 @@
 # chat-relay-server
-Chat relay server with both CLI and web chat client for 1:1 chat, open chatroom, and 1:1 video chat.
+Chat relay server based on websockets and WebRTC. CLI and web chat clients for 1:1 text chat, open text chatroom, and 1:1 video chat.
 
 **_Caution:_** Only for proof-of-concept and reference. 
 Do not use for production or continually expose to public Internet, 
