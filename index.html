@@ -87,50 +87,56 @@
       ws = new WebSocket("wss://chat.www.com/ws/");
       ws.onopen = () => { info("Connected. Waiting for server..."); };
       ws.onmessage = (evt) => {
-        const msg = evt.data;
-        if (msg.startsWith("CONNECTED:")) {
-          let parts = msg.split(":");
-          myCode = parts[1];
-          myName = parts[2];
+        let message;
+        try {
+          message = JSON.parse(evt.data);
+        } catch (e) {
+          console.error("Received non-JSON message from server:", evt.data, e);
+          log("[Error: Received invalid data from server. Check console.]", "err");
+          return;
+        }
+
+        const type = message.type;
+        const payload = message.payload;
+
+        if (type === "CONNECTED") {
+          myCode = payload.code;
+          myName = payload.name;
           updateInfo();
           log("Welcome! Use /join CODE, /name NEWNAME, /chatroom, /list, /quit");
         }
-        else if (msg.startsWith("PAIR:")) {
-          let [,code,name] = msg.split(":",3);
-          log(`[Connected! You are chatting with ${name} (code ${code})]`, "sys");
+        else if (type === "PAIR") {
+          log(`[Connected! You are chatting with ${payload.name} (code ${payload.code})]`, "sys");
           resetVideoState();
           videoChatRequested = false; // Reset on new pair
         }
-        else if (msg.startsWith("MSGFROM:")) {
-          let [,sender,text] = msg.split(":",3);
-          log(`${sender}: ${text}`, "peer");
+        else if (type === "MSGFROM") {
+          log(`${payload.sender}: ${payload.text}`, "peer");
         }
-        else if (msg.startsWith("RENAMED:")) {
-          let newName = msg.split(":",2)[1];
-          log(`[Your chat partner is now: ${newName}]`, "sys");
+        else if (type === "RENAMED") {
+          log(`[Your chat partner is now: ${payload.newName}]`, "sys");
         }
-        else if (msg === "PEER_LEFT") {
+        else if (type === "PEER_LEFT") {
           log("[Your chat partner disconnected. Type /join CODE to connect to another.]", "sys");
           resetVideoState();
           videoChatRequested = false;
         }
-        else if (msg === "PEER_LEFT_CHATROOM") {
+        else if (type === "PEER_LEFT_CHATROOM") {
           log("[Your chat partner has left for the chatroom.]", "sys");
           resetVideoState();
           videoChatRequested = false;
         }
-        else if (msg.startsWith("CHATROOM:")) {
-          let [,sender,text] = msg.split(":",3);
-          log(`[${sender} @ chatroom]: ${text}`,"room");
+        else if (type === "CHATROOM") {
+          log(`[${payload.sender} @ chatroom]: ${payload.text}`,"room");
         }
-        else if (msg.startsWith("INFO:")) {
-          log("[Info] " + msg.slice(5), "info");
+        else if (type === "INFO") {
+          log("[Info] " + payload.message, "info");
         }
-        else if (msg.startsWith("ERROR:")) {
-          log("[ERROR] " + msg.slice(6),"err");
+        else if (type === "ERROR") {
+          log("[ERROR] " + payload.message,"err");
         }
         // --- Video Chat Autostart Logic ---
-        else if (msg === "VIDEO_PLEASE_START") {
+        else if (type === "VIDEO_PLEASE_START") {
           if (!videoChatRequested) {
             log("[Peer requested video chat. Starting video...]", "info");
             videoChatRequested = true;
@@ -138,22 +144,23 @@
           }
         }
         // -- WebRTC signaling --
-        else if (msg.startsWith("VIDEO_OFFER:")) {
-          handleVideoOffer(JSON.parse(msg.slice("VIDEO_OFFER:".length)));
+        else if (type === "VIDEO_OFFER") {
+          handleVideoOffer(payload); // payload is the offer
         }
-        else if (msg.startsWith("VIDEO_ANSWER:")) {
-          handleVideoAnswer(JSON.parse(msg.slice("VIDEO_ANSWER:".length)));
+        else if (type === "VIDEO_ANSWER") {
+          handleVideoAnswer(payload); // payload is the answer
         }
-        else if (msg.startsWith("VIDEO_ICE:")) {
-          handleVideoICE(JSON.parse(msg.slice("VIDEO_ICE:".length)));
+        else if (type === "VIDEO_ICE") {
+          handleVideoICE(payload); // payload is the ICE candidate
         }
         // --- Hang Up Logic ---
-        else if (msg === "VIDEO_HANGUP") {
+        else if (type === "VIDEO_HANGUP") {
           log("[Peer hung up the video call.]", "info");
           resetVideoState();
         }
         else {
-          log("[Server] " + msg, "sys");
+          log("[Server] Unknown message type: " + type, "sys");
+          console.log("Unknown message from server:", message);
         }
       };
       ws.onclose = () => {
@@ -187,22 +194,24 @@
       }
       if (txt === "/quit") {
         quitting = true;
-        ws.send("LEAVE");
+        ws.send(JSON.stringify({type: "LEAVE"}));
         info("Leaving chat...");
         ws.close();
       } else if (txt.startsWith("/join ")) {
-        ws.send("JOIN:" + txt.split(" ",2)[1]);
+        const joinCode = txt.split(" ",2)[1];
+        ws.send(JSON.stringify({type: "JOIN", payload: {code: joinCode}}));
       } else if (txt.startsWith("/name ")) {
-        myName = txt.slice(6).trim();
+        const newName = txt.slice(6).trim();
+        myName = newName; // Update local name immediately for UI consistency
         updateInfo();
         log(`[You are now known as: ${myName}]`, "sys");
-        ws.send("RENAME:" + myName);
+        ws.send(JSON.stringify({type: "RENAME", payload: {newName: newName}}));
       } else if (txt === "/chatroom") {
-        ws.send("/chatroom");
+        ws.send(JSON.stringify({type: "/chatroom"}));
       } else if (txt === "/list") {
-        ws.send("/list");
+        ws.send(JSON.stringify({type: "/list"}));
       } else {
-        ws.send("MSG:" + txt);
+        ws.send(JSON.stringify({type: "MSG", payload: {text: txt}}));
         log(`You: ${txt}`, "me");
       }
       inp.value = "";
@@ -218,7 +227,7 @@
         return;
       }
       if (!videoChatRequested && !isFromPeer) {
-        ws.send("VIDEO_PLEASE_START");
+        ws.send(JSON.stringify({type: "VIDEO_PLEASE_START"}));
         videoChatRequested = true;
       }
       navigator.mediaDevices.getUserMedia({ video: true, audio: true })
@@ -230,7 +239,7 @@
           }
           // Answerer will set up connection on VIDEO_OFFER
         }).catch(err => {
-          log("[Error accessing camera/microphone: " + err + "]", "err");
+          log("[Error accessing camera/microphone: " + err.name + ". Please check permissions and ensure no other application is using the camera.]", "err");
         });
     }
 
@@ -250,18 +259,28 @@
 
       peerConnection.onicecandidate = e => {
         if (e.candidate) {
-          ws.send('VIDEO_ICE:' + JSON.stringify(e.candidate));
+          ws.send(JSON.stringify({type: "VIDEO_ICE", payload: e.candidate}));
         }
       };
 
       peerConnection.oniceconnectionstatechange = () => {
         log(`[ICE connection state: ${peerConnection.iceConnectionState}]`, "info");
+        if (peerConnection.iceConnectionState === 'failed') {
+          log("[Video connection failed. Attempting to restart...]", "err");
+          if (typeof peerConnection.restartIce === 'function') {
+            log("[Attempting peerConnection.restartIce()...]", "info");
+            peerConnection.restartIce();
+          } else {
+            log("[peerConnection.restartIce() not available. Resetting video state.]", "err");
+            resetVideoState();
+          }
+        }
       };
 
       if (isInitiator) {
         peerConnection.createOffer().then(offer => {
           peerConnection.setLocalDescription(offer);
-          ws.send('VIDEO_OFFER:' + JSON.stringify(offer));
+          ws.send(JSON.stringify({type: "VIDEO_OFFER", payload: offer}));
           log("[Sent video offer]", "info");
         });
       }
@@ -271,22 +290,31 @@
       log("[Received video offer]", "info");
       // Always fully clean up before starting a new inbound call
       resetVideoState();
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        .then(stream => {
-          localStream = stream;
-          document.getElementById('localVideo').srcObject = stream;
-          setupPeerConnection(false);
-          doHandleVideoOffer(offer);
-        }).catch(err => {
-          log("[Error accessing camera/mic for answer: " + err + "]", "err");
-        });
+
+      if (localStream && localStream.active && localStream.getTracks().some(track => track.readyState === 'live')) {
+        log("[Using existing local stream for video offer]", "info");
+        // Ensure localVideo srcObject is set if it was somehow cleared
+        document.getElementById('localVideo').srcObject = localStream;
+        setupPeerConnection(false);
+        doHandleVideoOffer(offer);
+      } else {
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+          .then(stream => {
+            localStream = stream;
+            document.getElementById('localVideo').srcObject = stream;
+            setupPeerConnection(false);
+            doHandleVideoOffer(offer);
+          }).catch(err => {
+            log("[Error accessing camera/microphone: " + err.name + ". Please check permissions and ensure no other application is using the camera.]", "err");
+          });
+      }
     }
     function doHandleVideoOffer(offer) {
       peerConnection.setRemoteDescription(new RTCSessionDescription(offer)).then(() => {
         return peerConnection.createAnswer();
       }).then(answer => {
         peerConnection.setLocalDescription(answer);
-        ws.send('VIDEO_ANSWER:' + JSON.stringify(answer));
+        ws.send(JSON.stringify({type: "VIDEO_ANSWER", payload: answer}));
         log("[Sent video answer]", "info");
       });
     }
@@ -307,7 +335,7 @@
 
     function hangUpVideoChat() {
       if (peerConnection) {
-        ws.send("VIDEO_HANGUP");
+        ws.send(JSON.stringify({type: "VIDEO_HANGUP"}));
         log("[You hung up the call.]", "info");
         resetVideoState();
       }
