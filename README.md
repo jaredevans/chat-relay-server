@@ -1,9 +1,10 @@
-# chat-relay-server
-Chat relay server based on websockets and WebRTC. CLI and web chat clients for 1:1 text chat, open text chatroom, and 1:1 video chat.
+# **chat-relay-server**
 
-**_Caution:_** Only for proof-of-concept and reference. 
-Do not use for production or continually expose to public Internet, 
-due to insecure code.
+Chat relay server for text and video chat, using websockets and WebRTC. Includes both CLI and web chat clients for one-on-one and group chat.
+
+### ⚠️ Caution:
+This project is for proof-of-concept, learning, and reference purposes only.
+It is not secure for production and should not be exposed directly to the public Internet.
 
 CLI client:
 
@@ -17,114 +18,127 @@ Video chat (between iPad [must run Safari] and Mac laptop [Google Chrome]):
 
 <img src="https://i.imgur.com/OvH4tAP.jpeg" width=700 height=600>
 
+**Overview**
 
-**Async Chat Relay Server with Text and Video Chat, with CLI and webapp clients**
-
-**Overview:**
-
-This project is a lightweight chat relay server that supports both text chat and peer-to-peer video chat.
-It’s designed to be self-hosted and easy to run, requiring minimal dependencies.
-
-The server acts as a signaling relay for chat messages and for exchanging WebRTC information
-(for video), but _does not_ relay video or audio data. All media streams go directly between users’ browsers using secure peer-to-peer connections.
+This project implements a lightweight, async chat relay server supporting both text chat and peer-to-peer video chat. All messages and WebRTC signaling are relayed by a Python server using websockets. Media streams for video are sent peer-to-peer via WebRTC (the server never sees video or audio).
 
 **The repo includes:**
 
-1. A Python relay server for handling WebSocket chat and WebRTC signaling.
-1. A command-line client (Python).
-1. A web client with both text chat and video chat capability.
-1. Example nginx configuration for a secure HTTPS reverse proxy to the chat relay server.
+* A Python relay server (relay_server.py) handling all WebSocket chat and WebRTC signaling.
+* A Python command-line client (chat_client.py).
+* A web client (index.html) supporting both text and video chat.
+* Example nginx configuration for secure HTTPS reverse proxying to the chat relay server.
 
-**How It Works:**
+**How It Works**
 
-Each user who connects gets a unique code and a random display name.
+Each client connecting to the server gets a unique code and random display name.
 
-Users can chat one-on-one by exchanging codes, or join a shared chatroom.
+Users can chat one-on-one (by exchanging codes) or join a public chatroom for group messaging.
 
-You can change your display name, join or leave the chatroom, and see who else is in the chatroom.
+Users can change their display name, join or leave the chatroom, and view current members.
 
-For video chat, users connect in a private one-on-one session.
-The server relays the WebRTC offer/answer/ICE candidates, but the actual video stream is peer-to-peer.
+Video chat is one-on-one only, using WebRTC for a direct peer connection. The server just relays the setup information.
 
-**Features:**
+No data (messages, logs, etc.) are stored—everything is kept in server memory only.
 
-* Private, no account registration or central user database.
-* Text chat: one-on-one (via code) or group (via chatroom).
-* Video chat: one-on-one only, using WebRTC (works in all modern browsers. Note: iPad must use the Safari web browser for video chats).
-* Simple Python CLI client for desktop chat.
-* Web client for text + video chat.
-* User renaming and chatroom listing.
-* Secure deployment using HTTPS with nginx reverse proxy.
+**Features**
 
-**Getting Started:**
+* Private, anonymous chat: No registration, no database, no saved logs.
+* Text chat: 1:1 (using codes) or group chatroom.
+* Video chat: 1:1 WebRTC between browser clients (modern browsers supported; iPad users must use Safari).
+* Simple CLI client for text chat (cross-platform).
+* Modern web client for text and video.
+* User renaming and chatroom listing commands.
+* Designed for deployment behind an HTTPS nginx reverse proxy.
 
-**Prerequisites**
+**Getting Started**
+
+Prerequisites
 
 * Python 3.7 or higher
-* The websockets Python library (pip install websockets)
-* nginx configuration for HTTPS reverse proxy
+* websockets Python library (pip install websockets)
+* nginx for HTTPS reverse proxy
 
 **Running the Relay Server**
 
-Start the server with:
+Start the server:
 
-python3 relay_server.py
+```python3 relay_server.py```
 
-By default, it listens on 127.0.0.1:6789 - use nginx reverse proxy make it accessible on the network.
+By default, it listens on 127.0.0.1:6789.
+
+Note: For security, you should NOT expose this port directly. Use nginx to proxy WebSocket connections securely.
 
 **Using the CLI Chat Client**
 
-Save the client script as chat_client.py.
-Edit the WS_URL at the top of the script to match your deployment.
+Edit WS\_URL at the top of chat\_client.py to match your deployment.
 
-Run with:
+Run:
 
-python3 chat_client.py
+```python3 chat_client.py```
 
-The client will print your unique code and display name. Share your code with a friend or
-enter someone else's code to connect.
+On startup, you’ll see your unique code and display name.
 
-**Supported CLI Commands:**
+**Supported CLI Commands**
 
-/join CODE — Start a private chat with another user (use their code).
-
-/name NEWNAME — Change your display name.
-
-/chatroom — Join the shared chatroom (group text).
-
-/list — Show list of chatroom members.
-
-/quit — Disconnect.
+> /join CODE — Start a private chat with another user.
+> 
+> /name NEWNAME — Change your display name.
+> 
+> /chatroom — Join the shared group chatroom.
+> 
+> /list — Show chatroom members.
+> 
+> /quit — Disconnect.
 
 **Using the Web Client**
 
-Save the HTML file and open it in a modern browser (Chrome, Firefox, Edge, Safari).
+Edit the WebSocket address in index.html to match your deployment (search for wss://).
 
-Edit the line of code with wss:// to match your deployment.
+Open index.html in a browser or place it in your server running nginx.
 
-The web client connects via WebSocket to /ws/ and allows:
-
-* One-on-one text chat (by code)
-* Group chatroom text chat
-* One-on-one video calls (WebRTC)
-
-Click “Start Video Chat” to request a 1:1 video call with your chat partner.
-
-Click “Hang Up” to end the video call.
+Use the UI for 1:1 or group chat, and to start/hang up video calls.
 
 **Deploying with nginx Reverse Proxy (for HTTPS)**
 
-Use the provided nginx config example (replace chat.www.com with your domain).
+Example nginx config:
 
-Set up SSL/TLS with your certificates for HTTPS.
+```
+server {
+    listen 443 ssl;
+    server_name chat.www.com;
 
-Place the file index.html in the web root.
+    ssl_certificate /path/to/fullchain.pem;
+    ssl_certificate_key /path/to/privkey.pem;
 
-***Security Notes:***
+    location /ws/ {
+        proxy_pass http://127.0.0.1:6789;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+    }
 
-* The server is intended for small private use (friends, small groups, testing).
-* No message history is stored. All state is in memory only.
-* There is no user authentication; anyone who knows your server address can connect and get a code.
-* Caution: This was more of a learning experience for me. The code, while functional, has not undergone a security review and is vulnerable to being exploited.
+    location / {
+        root /var/www/html;  # where index.html lives
+    }
+}
+```
+Replace chat.www.com with your own domain.
 
-## Do not continually expose to public Internet. 
+Avoid exposing the Python server port directly to public Internet.
+
+**Security Notes**
+
+* No authentication. Anyone who knows your server address can connect and obtain a code.
+* No stored history or logs. All chat state is in memory only and lost when the server restarts.
+* No input validation or sanitization. Vulnerable to many classes of attacks if exposed publicly.
+* No access controls. All connected users are peers.
+* NOT suitable for public or production use.
+* Only expose via HTTPS using a reverse proxy, and keep server access private/restricted.
+* For serious deployments, you must implement authentication, secure code review, and monitoring.
+
+
+**Final Note:**
+
+This project is for learning and demonstration only. Please do not use it for sensitive communications or expose it to untrusted users. If you want a production chat solution, look for a mature, audited project with proper security controls.
