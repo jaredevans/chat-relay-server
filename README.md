@@ -16,7 +16,7 @@ Webapp client:
 
 Video chat (between iPad [must run Safari] and Mac laptop [Google Chrome]):
 
-<img src="https://i.imgur.com/OvH4tAP.jpeg" width=700 height=600>
+<img src="https://jarednevans.wordpress.com/wp-content/uploads/2025/06/laptop_ipad_videochat.png" width=700 height=600>
 
 **Overview**
 
