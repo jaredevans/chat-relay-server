@@ -230,7 +230,7 @@
           }
           // Answerer will set up connection on VIDEO_OFFER
         }).catch(err => {
-          log("[Error accessing camera/microphone: " + err + "]", "err");
+          log("[Error accessing camera/microphone: " + err.name + ". Please check permissions and ensure no other application is using the camera.]", "err");
         });
     }
 
@@ -256,6 +256,16 @@
 
       peerConnection.oniceconnectionstatechange = () => {
         log(`[ICE connection state: ${peerConnection.iceConnectionState}]`, "info");
+        if (peerConnection.iceConnectionState === 'failed') {
+          log("[Video connection failed. Attempting to restart...]", "err");
+          if (typeof peerConnection.restartIce === 'function') {
+            log("[Attempting peerConnection.restartIce()...]", "info");
+            peerConnection.restartIce();
+          } else {
+            log("[peerConnection.restartIce() not available. Resetting video state.]", "err");
+            resetVideoState();
+          }
+        }
       };
 
       if (isInitiator) {
@@ -271,15 +281,24 @@
       log("[Received video offer]", "info");
       // Always fully clean up before starting a new inbound call
       resetVideoState();
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        .then(stream => {
-          localStream = stream;
-          document.getElementById('localVideo').srcObject = stream;
-          setupPeerConnection(false);
-          doHandleVideoOffer(offer);
-        }).catch(err => {
-          log("[Error accessing camera/mic for answer: " + err + "]", "err");
-        });
+
+      if (localStream && localStream.active && localStream.getTracks().some(track => track.readyState === 'live')) {
+        log("[Using existing local stream for video offer]", "info");
+        // Ensure localVideo srcObject is set if it was somehow cleared
+        document.getElementById('localVideo').srcObject = localStream;
+        setupPeerConnection(false);
+        doHandleVideoOffer(offer);
+      } else {
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+          .then(stream => {
+            localStream = stream;
+            document.getElementById('localVideo').srcObject = stream;
+            setupPeerConnection(false);
+            doHandleVideoOffer(offer);
+          }).catch(err => {
+            log("[Error accessing camera/microphone: " + err.name + ". Please check permissions and ensure no other application is using the camera.]", "err");
+          });
+      }
     }
     function doHandleVideoOffer(offer) {
       peerConnection.setRemoteDescription(new RTCSessionDescription(offer)).then(() => {
