@@ -59,7 +59,8 @@ async def handler(websocket):
                     await relay_message(peer_ws, "INFO:You left the chatroom for 1:1 chat.")
 
                 # If already in 1:1, disconnect from old peer.
-                old_peer = clients[code]['peer']                                                                                        if old_peer and old_peer in clients:
+                old_peer = clients[code]['peer'] 
+                if old_peer and old_peer in clients:
                     peer_ws = clients[old_peer]['ws']
                     await relay_message(peer_ws, "PEER_LEFT")
                     clients[old_peer]['peer'] = None
@@ -74,8 +75,7 @@ async def handler(websocket):
                     print(f"[=] {clients[code]['name']} (code: {code}) joined chat with {peer_name} (code: {other_code})")
                     await websocket.send(f"PAIR:{other_code}:{peer_name}")
                     await peer_ws.send(f"PAIR:{code}:{clients[code]['name']}")
-                else:
-                    await websocket.send("ERROR:Invalid or busy code")
+                else:                                                                                                                       await websocket.send("ERROR:Invalid or busy code")
 
             elif message.startswith("MSG:"):
                 msg_text = message[4:]
@@ -126,9 +126,9 @@ async def handler(websocket):
                 print(f"[@] {clients[code]['name']} (code: {code}) joined chatroom.")
                 await websocket.send("INFO:You are now in the chatroom. Type messages to chat with everyone here.")
 
-            elif message == "/list":
-                member_lines = []
-                for member_code in chatroom:
+            elif message == "/list": 
+                member_lines = [] 
+                for member_code in chatroom: 
                     member = clients.get(member_code)
                     if member:
                         member_line = f"{member['name']} (code: {member_code})"
