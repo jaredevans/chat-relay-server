@@ -58,7 +58,7 @@ async def handler(websocket):
                     peer_ws = clients[other_code]['ws']
                     await relay_message(peer_ws, "INFO:You left the chatroom for 1:1 chat.")
 
-                # If already in 1:1, disconnect from old peer
+                # If already in 1:1, disconnect from old peer.
                 old_peer = clients[code]['peer']                                                                                        if old_peer and old_peer in clients:
                     peer_ws = clients[old_peer]['ws']
                     await relay_message(peer_ws, "PEER_LEFT")
